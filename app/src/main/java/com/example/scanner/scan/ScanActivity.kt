@@ -33,7 +33,7 @@ class ScanActivity : ComponentActivity() {
             }
         }
 
-        if (!hasAllPermissions()) {
+        if (!hasAllPermissions() && !simulated) {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
     }
