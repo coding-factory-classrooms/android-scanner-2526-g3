@@ -17,9 +17,15 @@ class ScanActivity : ComponentActivity() {
 
     private val cameraExecutor = Executors.newSingleThreadExecutor()
 
+
+
     @ExperimentalGetImage
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // récupère le booléen simulated, qui sera récupéré plus tard sur le VM
+        val simulated = intent.getBooleanExtra("simulated", false)
+
         enableEdgeToEdge()
         setContent {
             ScannerTheme {

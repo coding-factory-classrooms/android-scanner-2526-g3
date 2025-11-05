@@ -16,6 +16,8 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
+
+
         enableEdgeToEdge()
         setContent {
             ScannerTheme() {
