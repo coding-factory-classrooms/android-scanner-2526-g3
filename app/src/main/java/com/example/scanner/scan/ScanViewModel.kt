@@ -1,22 +1,31 @@
 package com.example.scanner.scan
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.scanner.data.remote.ProductRepository
+import com.example.scanner.domain.model.Product
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-sealed class ScanState {
-    data object Initial : ScanState()
-    data object Normal : ScanState()
-    data object Simulated : ScanState()
-}
+class ScanViewModel(
+    private val repository: ProductRepository
+) : ViewModel() {
 
-class ScanViewModel : ViewModel() {
+    private val _products = MutableStateFlow<List<Product>>(emptyList())
+    val products: StateFlow<List<Product>> = _products.asStateFlow()
 
-    val scanStateFlow = MutableStateFlow<ScanState>(ScanState.Initial)
-
-    fun isSimulated(isSimulated: Boolean) {
-        scanStateFlow.value = when(isSimulated) {
-            true -> ScanState.Simulated
-            false -> ScanState.Normal
+    fun fetchProduct(barcode: String, onFetched: (Product?) -> Unit) {
+        viewModelScope.launch {
+            val productData = repository.getProductByBarcode(barcode)
+            val product = productData
+            productData?.let {
+                _products.value = _products.value + it
+            }
+            onFetched(product)
         }
     }
 }
+
+

@@ -10,7 +10,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.camera.core.ExperimentalGetImage
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scanner.data.remote.ProductApi
+import com.example.scanner.data.remote.ProductRepository
 import com.example.scanner.ui.theme.ScannerTheme
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ScanActivity : ComponentActivity() {
@@ -22,17 +30,40 @@ class ScanActivity : ComponentActivity() {
     @ExperimentalGetImage
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // récupère le booléen simulated, qui sera récupéré plus tard sur le VM
+        
         val simulated = intent.getBooleanExtra("simulated", false)
 
         enableEdgeToEdge()
-        setContent {
-            ScannerTheme {
-                ScanScreen()
+
+        // Crée Retrofit et ProductApi
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://world.openfoodfacts.org/") // Remplace par ton endpoint si nécessaire
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val productApi = retrofit.create(ProductApi::class.java)
+
+        // Crée le repository
+        val repository = ProductRepository(productApi)
+
+        // Crée le ViewModel via ViewModelProvider pour respecter le cycle de vie
+        val viewModelFactory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(ScanViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return ScanViewModel(repository) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
             }
         }
 
+        setContent {
+            ScannerTheme {
+                val scanViewModel: ScanViewModel = viewModel(factory = viewModelFactory)
+                ScanScreen(scanViewModel = scanViewModel)
+            }
+        }
+
+        // Vérifie les permissions
         if (!hasAllPermissions() && !simulated) {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }

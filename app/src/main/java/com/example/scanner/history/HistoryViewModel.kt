@@ -1,5 +1,8 @@
-package com.example.scanner.history
-
+import androidx.lifecycle.ViewModel
+import com.example.scanner.data.remote.ProductData
+import com.example.scanner.domain.model.Product
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -18,13 +21,16 @@ sealed class HistoryUIState{
 }
 
 class HistoryViewModel: ViewModel(){
+  
+    private val _products = MutableStateFlow<List<Product>>(emptyList())
+    val products: StateFlow<List<Product>> = _products
 
     val uiStateFlow = MutableStateFlow<HistoryUIState>(HistoryUIState.Loading)
 
     fun loadScannedProducts(){
         uiStateFlow.value = HistoryUIState.Loading
 
-        addProductToDB(testProducts[0])
+        addProductToDB(testProducts[0]) // un test d'ajout
 
         // recup les produits scannés dans le local storage
 
@@ -36,6 +42,12 @@ class HistoryViewModel: ViewModel(){
         val existingList = Paper.book().read<List<ScannedProduct>>("products", testProducts)
         Log.i("list",existingList.toString())
         uiStateFlow.value = HistoryUIState.Success(testProducts)
+    }
+    
+    fun addProduct(product: Product?) {
+        product?.let {
+            _products.value = _products.value + it
+        }
     }
 
     // ajout du produit en question dans la db
