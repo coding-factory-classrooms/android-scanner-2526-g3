@@ -1,9 +1,7 @@
 package com.example.scanner.scan
 
-import HistoryViewModel
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -23,104 +21,101 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.size.Scale
 import com.example.scanner.ui.theme.ScannerTheme
-import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.example.scanner.history.HistoryActivity
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreview
-import com.example.scanner.history.HistoryActivity
 
 @ExperimentalGetImage
 @Composable
 fun ScanScreen(
-    scanViewModel: ScanViewModel = viewModel(),
-    historyViewModel: HistoryViewModel = viewModel()
+    scanViewModel: ScanViewModel = viewModel()
 ) {
     val products by scanViewModel.products.collectAsState()
+    val scanState by scanViewModel.scanStateFlow.collectAsState()
     var scannedCode by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
-
-    val scanState by vm.scanStateFlow.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
     // récupère la variable Simulated depuis l'activity
     val simulated = (context as? ComponentActivity)
         ?.intent
         ?.getBooleanExtra("simulated", false) ?: false
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    // on update l'état de simulation
+    scanViewModel.isSimulated(simulated)
+    Log.i("simulated",simulated.toString())
 
     Scaffold { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
 
-            // Camera Preview
-            AndroidView(
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-                    val cameraExecutor = Executors.newSingleThreadExecutor()
+            when(val p = scanState) {
+                ScanState.Initial -> CircularProgressIndicator()
+                ScanState.Normal -> AndroidView(
+                    factory = { ctx ->
+                        val previewView = PreviewView(ctx)
+                        val cameraExecutor = Executors.newSingleThreadExecutor()
 
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
+                        cameraProviderFuture.addListener({
+                            val cameraProvider = cameraProviderFuture.get()
 
-                        val preview = CameraPreview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-
-                        val analyzer = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-                            .also {
-                                it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { code ->
-                                    if (!isProcessing) { // ne fait quelque chose que si pas déjà en traitement
-                                        isProcessing = true
-                                        scannedCode = code
-                                        scanViewModel.fetchProduct(code) { productData ->
-                                            val product = productData
-                                            // Ajouter dans l'historique
-                                            historyViewModel.addProduct(product)
-                                            // Lancer HistoryActivity
-                                            context.startActivity(
-                                                Intent(context, HistoryActivity::class.java)
-                                            )
-                                        }
-                                    }
-                                })
+                            val preview = CameraPreview.Builder().build().apply {
+                                setSurfaceProvider(previewView.surfaceProvider)
                             }
 
                             val analyzer = ImageAnalysis.Builder()
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build().apply {
-                                    setAnalyzer(executor) { imageProxy ->
-                                        processImage(imageProxy) { code ->
+                                .build()
+                                .also {
+                                    it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { code ->
+                                        if (!isProcessing) {
+                                            isProcessing = true
                                             scannedCode = code
-                                            Log.d("ScanScreen", "Code: $code")
+                                            
+                                            // on récupère le produit et on navigue si réussi
+                                            scanViewModel.fetchProduct(code) {
+                                                context.startActivity(Intent(context, HistoryActivity::class.java))
+                                                isProcessing = false
+                                            }
                                         }
-                                    }
+                                    })
                                 }
 
-                            // Fin du scan, donc on retire la gestion de la caméra
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                analyzer
-                            )
-                        } catch (e: Exception) {
-                            Log.e("CameraX", "Use case binding failed", e)
-                        }
-                    }, ContextCompat.getMainExecutor(ctx))
+                            try {
+                                cameraProvider.unbindAll()
+                                cameraProvider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_BACK_CAMERA,
+                                    preview,
+                                    analyzer
+                                )
+                            } catch (e: Exception) {
+                                Log.e("CameraX", "Use case binding failed", e)
+                            }
 
-                    previewView
-                },
-                modifier = Modifier.fillMaxWidth().weight(1f)
-            )
+                        }, ContextCompat.getMainExecutor(ctx))
+
+                        previewView
+                    },
+                    modifier = Modifier.fillMaxWidth().weight(1f)
+                )
+                ScanState.Simulated -> {
+                    val code = "3274080005003"
+                    // on récupère le produit et on navigue si réussi
+                    scanViewModel.fetchProduct(code) {
+                        context.startActivity(Intent(context, HistoryActivity::class.java))
+                        isProcessing = false
+                    }
+                    Log.d("ScanScreen", "Code: $scannedCode")
+                    Text("Simulation de scan")
+                }
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -149,6 +144,10 @@ fun ScanScreen(
     }
 }
 
+@Composable
+fun Builder() {
+    TODO("Not yet implemented")
+}
 
 private class BarcodeAnalyzer(
     private val onBarcodeDetected: (String) -> Unit

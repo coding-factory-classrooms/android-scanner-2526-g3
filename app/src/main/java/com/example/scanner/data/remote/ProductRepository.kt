@@ -2,6 +2,7 @@ package com.example.scanner.data.remote
 
 import android.util.Log
 import com.example.scanner.domain.model.Product
+import java.util.Calendar
 
 class ProductRepository(private val api: ProductApi) {
 
@@ -14,7 +15,8 @@ class ProductRepository(private val api: ProductApi) {
                     name = dto.product.product_name ?: "Inconnu",
                     brand = dto.product.brands ?: "N/A",
                     quantity = dto.product.quantity ?: "-",
-                    imageUrl = dto.product.image_url ?: ""
+                    imageUrl = dto.product.image_url ?: "",
+                    lastScanDate = Calendar.getInstance().time
                 )
             } else {
                 Log.e("ProductRepository", "Produit non trouvé pour le code: $barcode")

@@ -18,7 +18,6 @@ import com.example.scanner.data.remote.ProductRepository
 import com.example.scanner.ui.theme.ScannerTheme
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ScanActivity : ComponentActivity() {
@@ -35,24 +34,22 @@ class ScanActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // Crée Retrofit et ProductApi
+        // crée une requête rétrofit
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://world.openfoodfacts.org/") // Remplace par ton endpoint si nécessaire
+            .baseUrl("https://world.openfoodfacts.org/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val productApi = retrofit.create(ProductApi::class.java)
 
-        // Crée le repository
+        // on instancie le répository (le modèle de Produits) (d'ailleurs je viens de me rendre compte, Pourquoi on a fait ça alors qu'on a un modèle ScannedProducts ?)
         val repository = ProductRepository(productApi)
 
-        // Crée le ViewModel via ViewModelProvider pour respecter le cycle de vie
+        // Factory pour créer le ViewModel avec le repository
+        // (obligatoire car ScanViewModel a besoin du repository dans son constructeur)
         val viewModelFactory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                if (modelClass.isAssignableFrom(ScanViewModel::class.java)) {
-                    @Suppress("UNCHECKED_CAST")
-                    return ScanViewModel(repository) as T
-                }
-                throw IllegalArgumentException("Unknown ViewModel class")
+                @Suppress("UNCHECKED_CAST")
+                return ScanViewModel(repository) as T
             }
         }
 
@@ -63,7 +60,7 @@ class ScanActivity : ComponentActivity() {
             }
         }
 
-        // Vérifie les permissions
+        // on demande la permission s'il ne les a pas
         if (!hasAllPermissions() && !simulated) {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }

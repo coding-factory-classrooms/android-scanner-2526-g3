@@ -1,16 +1,13 @@
 package com.example.scanner.home
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.example.scanner.R
+import com.example.scanner.history.HistoryActivity
+import com.example.scanner.scan.ScanActivity
 import com.example.scanner.ui.theme.ScannerTheme
-import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.LocalContext
 import io.paperdb.Paper
 
 class HomeActivity : ComponentActivity() {
@@ -21,9 +18,21 @@ class HomeActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            ScannerTheme() {
-
-                HomeScreen()
+            ScannerTheme {
+                HomeScreen(
+                    onNavigateToScan = { isSimulated ->
+                        val intent = Intent(this, ScanActivity::class.java)
+                        intent.putExtra("simulated", isSimulated)
+                        if (isSimulated) {
+                            intent.putExtra("numbersBarCode", "3274080005003")
+                        }
+                        startActivity(intent)
+                    },
+                    onNavigateToHistory = {
+                        val intent = Intent(this, HistoryActivity::class.java)
+                        startActivity(intent)
+                    }
+                )
             }
         }
     }
