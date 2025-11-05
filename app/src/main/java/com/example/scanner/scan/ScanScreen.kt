@@ -80,7 +80,6 @@ fun ScanScreen(
                                             // on récupère le produit et on navigue si réussi
                                             scanViewModel.fetchProduct(code) {
                                                 context.startActivity(Intent(context, HistoryActivity::class.java))
-                                                isProcessing = false
                                             }
                                         }
                                     })
