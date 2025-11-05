@@ -88,4 +88,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
 
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.github.pilgr:paperdb:2.7.2")
 }
