@@ -10,13 +10,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.scanner.R
 import com.example.scanner.ui.theme.ScannerTheme
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
+import io.paperdb.Paper
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
+        Paper.init(this)
 
         enableEdgeToEdge()
         setContent {
