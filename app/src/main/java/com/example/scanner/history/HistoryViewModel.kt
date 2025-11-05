@@ -1,13 +1,16 @@
 package com.example.scanner.history
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.example.scanner.ScannedProduct
+import com.example.scanner.testProducts
 import kotlinx.coroutines.flow.MutableStateFlow
 
 sealed class HistoryUIState{
     data object Loading : HistoryUIState()
 
-    data class Success(val scannedObjects : List<ScannedProduct>) : HistoryUIState()
+    data class Success(val scannedProducts : List<ScannedProduct>) : HistoryUIState()
 
     data class Failure(val message: String) : HistoryUIState()
 }
@@ -26,6 +29,7 @@ class HistoryViewModel: ViewModel(){
 //        } else {
 //            uiStateFlow.value = HistoryUIState.Failure("Erreur dans la recuperation des produits")
 //        }
+        uiStateFlow.value = HistoryUIState.Success(testProducts)
 
     }
 
