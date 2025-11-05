@@ -66,7 +66,8 @@ fun HomeScreen() {
             Spacer(Modifier.height(12.dp))
 
             HistoryButton(onButtonClick = {
-                //
+                val intent = Intent(context, HistoryActivity::class.java)
+                context.startActivity(intent)
             })
         }
     }
