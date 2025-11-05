@@ -3,6 +3,8 @@ package com.example.scanner.scan
 import HistoryViewModel
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -24,12 +26,14 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.size.Scale
 import com.example.scanner.ui.theme.ScannerTheme
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreview
 import com.example.scanner.history.HistoryActivity
 
+@ExperimentalGetImage
 @Composable
 fun ScanScreen(
     scanViewModel: ScanViewModel = viewModel(),
@@ -40,6 +44,15 @@ fun ScanScreen(
     var isProcessing by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+
+    val scanState by vm.scanStateFlow.collectAsState()
+
+    // récupère la variable Simulated depuis l'activity
+    val simulated = (context as? ComponentActivity)
+        ?.intent
+        ?.getBooleanExtra("simulated", false) ?: false
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
@@ -80,7 +93,18 @@ fun ScanScreen(
                                 })
                             }
 
-                        try {
+                            val analyzer = ImageAnalysis.Builder()
+                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                .build().apply {
+                                    setAnalyzer(executor) { imageProxy ->
+                                        processImage(imageProxy) { code ->
+                                            scannedCode = code
+                                            Log.d("ScanScreen", "Code: $code")
+                                        }
+                                    }
+                                }
+
+                            // Fin du scan, donc on retire la gestion de la caméra
                             cameraProvider.unbindAll()
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
@@ -155,10 +179,9 @@ private class BarcodeAnalyzer(
     }
 }
 
-@Preview(showBackground = true)
+@ExperimentalGetImage
 @Composable
+@Preview(showBackground = true)
 fun ScanScreenPreview() {
-    ScannerTheme {
-        ScanScreen()
-    }
+    ScannerTheme { ScanScreen() }
 }
