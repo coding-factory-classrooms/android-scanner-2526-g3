@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scanner.history.HistoryActivity
 import com.example.scanner.scan.ScanActivity
 import com.example.scanner.ui.theme.ScannerTheme
 
@@ -49,6 +50,16 @@ fun HomeScreen() {
             ScanButton(onButtonClick = {
 
                 val intent = Intent(context, ScanActivity::class.java)
+                intent.putExtra("simulated",false)
+                context.startActivity(intent)
+            })
+
+            Spacer(Modifier.height(12.dp))
+
+            SimulatedScanButton(onButtonClick = {
+                val intent = Intent(context, ScanActivity::class.java)
+                intent.putExtra("simulated",true)
+                intent.putExtra("numbersBarCode","3274080005003")
                 context.startActivity(intent)
             })
 
@@ -67,6 +78,15 @@ private fun ScanButton(onButtonClick: () -> Unit) {
         onClick = onButtonClick
     ) {
         Text("Scan")
+    }
+}
+
+@Composable
+private fun SimulatedScanButton(onButtonClick: () -> Unit) {
+    Button(
+        onClick = onButtonClick
+    ) {
+        Text("Scan simulé")
     }
 }
 
