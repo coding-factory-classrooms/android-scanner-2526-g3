@@ -143,6 +143,7 @@ fun ProductCard(product: ScannedProduct) {
             Column(verticalArrangement = Arrangement.Top) {
                 FavoriteButton(product)
                 ShareButton(product)
+                DeleteButton(product)
             }
 
         }
@@ -181,6 +182,24 @@ private fun ShareButton(product : ScannedProduct, vm: HistoryViewModel = viewMod
             modifier = Modifier.height(20.dp),
             painter = painterResource(R.drawable.share),
             contentDescription = "Bouton de partage"
+        )
+    }
+}
+
+@Composable
+private fun DeleteButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    IconButton(
+        onClick = {
+            vm.deleteProduct(product, context)
+            vm.loadScannedProducts()
+        }
+    ) {
+        Icon(
+            modifier = Modifier.height(20.dp),
+            painter = painterResource(R.drawable.delete),
+            contentDescription = "Bouton de supression"
         )
     }
 }

@@ -111,4 +111,26 @@ class HistoryViewModel: ViewModel(){
         val shareIntent = Intent.createChooser(sendIntent, null)
         context.startActivity(shareIntent)
     }
+
+    fun deleteProduct(product: ScannedProduct, context: Context) {
+
+        // on récupère la liste du produit
+        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+        val productList = existingList.toMutableList()
+
+        // on récupère le produit via sa date de scan (car on a pas d'id)
+        val indexToUpdate = productList.indexOfFirst {
+            it.lastScanDate == product.lastScanDate
+        }
+
+        if (indexToUpdate != -1) {
+            productList.removeAt(indexToUpdate)
+            Toast.makeText(context, "Produit supprimé de la liste", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Produit non trouvé :(", Toast.LENGTH_SHORT).show()
+        }
+
+        Paper.book().write("products", productList)
+
+    }
 }
