@@ -2,6 +2,7 @@ package com.example.scanner.history
 
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,8 +24,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
@@ -63,12 +67,35 @@ fun HistoryBody(state: HistoryUIState) {
     when (state) {
         is HistoryUIState.Failure -> Text(state.message)
         HistoryUIState.Loading -> CircularProgressIndicator()
-        is HistoryUIState.Success -> LazyColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(state.scannedProducts) { product ->
-                ProductCard(product)
-            }
+        is HistoryUIState.Success ->
+            ProductsList(state)
+    }
+}
+
+@Composable
+private fun ProductsList(state: HistoryUIState.Success) {
+    // on crée la variable pour le champ de recherche
+    var searchQuery by remember { mutableStateOf("") }
+
+    // on filtre les produits par le nom du produit, en ne regardant pas les majuscules
+    val filteredProducts = state.scannedProducts.filter { productMap ->
+        (productMap.productNameFr as? String)
+            ?.contains(searchQuery, ignoreCase = true)
+            ?: false
+    }
+
+    OutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("Rechercher un produit") },
+        shape = RoundedCornerShape(12.dp),
+        value = searchQuery,
+        onValueChange = {searchQuery = it}
+    )
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(filteredProducts) { product ->
+            ProductCard(product)
         }
     }
 }
