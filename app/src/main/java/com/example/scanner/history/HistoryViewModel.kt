@@ -1,6 +1,7 @@
 package com.example.scanner.history
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import com.example.scanner.domain.model.Product
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,10 +65,8 @@ class HistoryViewModel: ViewModel(){
 
 
     fun changeFavoriteProduct(product: ScannedProduct, context: Context) {
-        // 1. Déterminer la nouvelle valeur de 'isFavorite'
         val favoriteProductValue = !product.isFavorite
 
-        // Affichage Toast (cette partie est correcte)
         when (favoriteProductValue) {
             true -> {
                 Toast.makeText(context, product.productNameFr + " mis en favori", Toast.LENGTH_SHORT).show()
@@ -94,5 +93,22 @@ class HistoryViewModel: ViewModel(){
         }
 
         Paper.book().write("products", updatedList)
+    }
+
+    fun shareProduct(product: ScannedProduct, context: Context) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            // on envoit le texte à envoyer dans l'intent spécial de "partage"
+            putExtra(Intent.EXTRA_TEXT,
+                "${product.productNameFr}\n" +
+                        "Scanné le ${product.lastScanDate}\n" +
+                        "Marque ${product.brandsTags}\n" +
+                        "Code barre ${product.code}\n"
+            )
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        context.startActivity(shareIntent)
     }
 }

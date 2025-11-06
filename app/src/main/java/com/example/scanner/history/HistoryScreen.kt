@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -139,7 +140,11 @@ fun ProductCard(product: ScannedProduct) {
                 Text(product.lastScanDate.toString())
             }
 
-            FavoriteButton(product)
+            Column(verticalArrangement = Arrangement.Top) {
+                FavoriteButton(product)
+                ShareButton(product)
+            }
+
         }
     }
 }
@@ -156,8 +161,26 @@ private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = view
         }
     ) {
         Icon(
+            modifier = Modifier.height(20.dp),
             painter = if (isToggled) painterResource(R.drawable.favorite_filled) else painterResource(R.drawable.favorite),
             contentDescription = "Bouton favori"
+        )
+    }
+}
+
+@Composable
+private fun ShareButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    IconButton(
+        onClick = {
+            vm.shareProduct(product, context)
+        }
+    ) {
+        Icon(
+            modifier = Modifier.height(20.dp),
+            painter = painterResource(R.drawable.share),
+            contentDescription = "Bouton de partage"
         )
     }
 }
