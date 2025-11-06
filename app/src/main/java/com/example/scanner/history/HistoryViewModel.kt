@@ -38,10 +38,13 @@ class HistoryViewModel: ViewModel(){
             val productList = savedProducts.map { scannedProduct ->
                 Product(
                     name = scannedProduct.productNameFr,
-                    brand = scannedProduct.brandsTags.firstOrNull() ?: "",
+                    brand = scannedProduct.brandsTags,
                     quantity = "",
                     imageUrl = scannedProduct.imageFrontURL,
-                    lastScanDate = scannedProduct.lastScanDate
+                    lastScanDate = scannedProduct.lastScanDate,
+                    allergensTagsFr = scannedProduct.allergensTagsFr,
+                    categoriesTagsFr = scannedProduct.categoriesTagsFr,
+                    ingredientsTagsFr = scannedProduct.ingredientsTagsFr
                 )
             }
             _products.value = productList

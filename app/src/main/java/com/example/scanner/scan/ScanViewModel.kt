@@ -51,11 +51,15 @@ class ScanViewModel(
     
     private fun saveProductToHistory(product: Product, barcode: String) {
         val scannedProduct = ScannedProduct(
-            brandsTags = listOf(product.brand),
+            brandsTags = product.brand,
             code = barcode,
             imageFrontURL = product.imageUrl,
             productNameFr = product.name,
-            lastScanDate = Calendar.getInstance().time
+            quantity = product.quantity,
+            lastScanDate = Calendar.getInstance().time,
+            allergensTagsFr = product.allergensTagsFr,
+            categoriesTagsFr = product.categoriesTagsFr,
+            ingredientsTagsFr = product.ingredientsTagsFr
         )
         
         val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()

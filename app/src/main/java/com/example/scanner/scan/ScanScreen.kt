@@ -133,7 +133,7 @@ fun ScanScreen(
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(product.name, fontWeight = FontWeight.Bold)
-                            Text(product.brand)
+                            Text(product.brand.toString())
                             Text(product.quantity)
                         }
                     }

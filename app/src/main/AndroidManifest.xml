@@ -35,6 +35,10 @@
             android:name=".scan.ScanActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".productDetails.ProductDetailsActivity"
+            android:exported="true" />
+
     </application>
 
 </manifest>

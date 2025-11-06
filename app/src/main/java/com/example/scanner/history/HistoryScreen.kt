@@ -1,5 +1,7 @@
 package com.example.scanner.history
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -38,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.scanner.ScannedProduct
+import com.example.scanner.productDetails.ProductDetailsActivity
+import com.example.scanner.scan.ScanActivity
 import com.example.scanner.ui.theme.ScannerTheme
 import com.example.scanner.R
 
@@ -70,6 +74,7 @@ fun HistoryScreen(vm: HistoryViewModel = viewModel()) {
 
 @Composable
 fun HistoryBody(state: HistoryUIState) {
+    val context = LocalContext.current
     when (state) {
         is HistoryUIState.Failure -> Text(state.message)
         HistoryUIState.Loading -> CircularProgressIndicator()
@@ -110,18 +115,19 @@ private fun ProductsList(state: HistoryUIState.Success) {
 }
 
 @Composable
-fun ProductCard(product: ScannedProduct) {
+fun ProductCard(product: ScannedProduct, context: Context) {
     Card(
         modifier = Modifier
-        .fillMaxWidth()
-        .height(140.dp),
+            .fillMaxWidth()
+            .height(140.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )) {
-        Row(Modifier
-            .fillMaxWidth(),
+        )
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -134,10 +140,15 @@ fun ProductCard(product: ScannedProduct) {
             )
 
             Column {
-                Log.i("product",product.toString())
+                Log.i("product", product.toString())
                 Text(product.productNameFr)
-                Text(product.brandsTags[0])
+                Text(product.brandsTags.toString())
                 Text(product.lastScanDate.toString())
+                DetailsButton(onButtonClick = {
+                    val intent = Intent(context, ProductDetailsActivity::class.java)
+                    intent.putExtra("product", product)
+                    context.startActivity(intent)
+                })
             }
 
             Column(verticalArrangement = Arrangement.Top) {
@@ -209,5 +220,14 @@ private fun DeleteButton(product : ScannedProduct, vm: HistoryViewModel = viewMo
 fun HistoryScreenPreview() {
     ScannerTheme {
         HistoryScreen()
+    }
+}
+
+@Composable
+fun DetailsButton(onButtonClick: () -> Unit) {
+    Button(
+        onClick = onButtonClick
+    ) {
+        Text("Details")
     }
 }
