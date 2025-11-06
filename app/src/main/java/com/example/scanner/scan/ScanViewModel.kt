@@ -76,11 +76,6 @@ class ScanViewModel(
         if (existingProduct != null) {
             updatedList.remove(existingProduct)
         }
-        val message = if (existingProduct !=null) {
-            "Produit déjà ajouté"
-        } else {
-            "Produit ajouté"
-        }
 
         updatedList.add(scannedProduct)
 
@@ -88,7 +83,11 @@ class ScanViewModel(
 
         Log.i("ScanViewModel", scannedProduct.toString())
 
-        return message
+        return if (existingProduct != null) {
+            "Produit déjà ajouté"
+        } else {
+            "Produit ajouté"
+        }
     }
 }
 
