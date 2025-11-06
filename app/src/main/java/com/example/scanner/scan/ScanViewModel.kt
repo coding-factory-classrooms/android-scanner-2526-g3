@@ -48,6 +48,16 @@ class ScanViewModel(
             }
         }
     }
+    fun fetchProductTest(barcode: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val product = repository.getProductByBarcode(barcode)
+
+            if (product != null) {
+                _products.value = _products.value + product
+                onSuccess()
+            }
+        }
+    }
 
     private fun saveProductToHistory(product: Product, barcode: String) {
         val scannedProduct = ScannedProduct(
