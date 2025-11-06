@@ -50,25 +50,24 @@ class ScanViewModel(
     }
     
     private fun saveProductToHistory(product: Product, barcode: String) {
-        try {
-            val scannedProduct = ScannedProduct(
-                brandsTags = listOf(product.brand),
-                code = barcode,
-                imageFrontURL = product.imageUrl,
-                productNameFr = product.name,
-                lastScanDate = Calendar.getInstance().time
-            )
-            
-            val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
-            val updatedList = existingList.toMutableList()
-            updatedList.add(scannedProduct)
-            Paper.book().write("products", updatedList)
-            
-            Log.i("ScanViewModel", scannedProduct.toString())
-        } catch (e: Exception) {
-            // Could not save to Paper DB (possibly in test environment)
-            // Silent fail is OK here as we don't want to block the product addition
-        }
+        val scannedProduct = ScannedProduct(
+            brandsTags = product.brand,
+            code = barcode,
+            imageFrontURL = product.imageUrl,
+            productNameFr = product.name,
+            quantity = product.quantity,
+            lastScanDate = Calendar.getInstance().time,
+            allergensTagsFr = product.allergensTagsFr,
+            categoriesTagsFr = product.categoriesTagsFr,
+            ingredientsTagsFr = product.ingredientsTagsFr
+        )
+        
+        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+        val updatedList = existingList.toMutableList()
+        updatedList.add(scannedProduct)
+        Paper.book().write("products", updatedList)
+        
+        Log.i("ScanViewModel", scannedProduct.toString())
     }
 }
 
