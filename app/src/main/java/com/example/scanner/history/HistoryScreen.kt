@@ -70,7 +70,7 @@ fun HistoryScreen(vm: HistoryViewModel = viewModel()) {
             ),
             title = {
                 Row (modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp) ,verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Scanned Products")
+                    Text("Historique des Scans")
                     GoBackButton()
                 }
 
@@ -177,8 +177,8 @@ fun ProductCard(product: ScannedProduct, context: Context, vm: HistoryViewModel=
                 Log.i("product", product.toString())
                 Text(product.productNameFr, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 val brands = product.brandsTags.joinToString(", ")
-                Text("De "+brands, fontStyle = FontStyle.Italic)
-                Text(vm.formatDate(product.lastScanDate))
+                Text(product.quantity, fontStyle = FontStyle.Italic)
+                Text("Scanné le " +vm.formatDate(product.lastScanDate))
 
                 Row {
                     DetailsButton(onButtonClick = {
@@ -221,7 +221,7 @@ private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = view
     }
 }
 @Composable
-private fun GoBackButton() {
+fun GoBackButton() {
     val context = LocalContext.current
     val activity = context as? Activity
 

@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.scanner.ScannedProduct
+import com.example.scanner.history.GoBackButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +40,11 @@ fun ProductDetailsScreen(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Détails du produit")
+                    Row {
+                        Text("Détails du produit")
+                        GoBackButton()
+                    }
+
                 }
             )
         }

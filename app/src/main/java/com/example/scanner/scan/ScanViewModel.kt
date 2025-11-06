@@ -25,8 +25,8 @@ class ScanViewModel(
     private val repository: ProductRepository
 ) : ViewModel() {
 
-    private val _products = MutableStateFlow<List<Product>>(emptyList())
-    val products: StateFlow<List<Product>> = _products.asStateFlow()
+    private val _product = MutableStateFlow<Product?>(null)
+    val product: StateFlow<Product?> = _product.asStateFlow()
 
     val scanStateFlow = MutableStateFlow<ScanState>(ScanState.Initial)
 
@@ -42,7 +42,7 @@ class ScanViewModel(
             val product = repository.getProductByBarcode(barcode)
 
             if (product != null) {
-                _products.value = _products.value + product
+                _product.value = product
 
                 // mettre le produit dans paper
                 val message = saveProductToHistory(product, barcode)
@@ -55,7 +55,7 @@ class ScanViewModel(
             val product = repository.getProductByBarcode(barcode)
 
             if (product != null) {
-                _products.value = _products.value + product
+                _product.value = product
                 onSuccess()
             }
         }

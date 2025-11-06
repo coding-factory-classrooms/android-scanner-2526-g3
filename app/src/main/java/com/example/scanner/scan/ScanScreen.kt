@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -22,6 +23,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.scanner.history.GoBackButton
 import com.example.scanner.ui.theme.ScannerTheme
 import com.example.scanner.history.HistoryActivity
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -29,15 +31,17 @@ import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreview
 
+@OptIn(ExperimentalMaterial3Api::class)
 @ExperimentalGetImage
 @Composable
 fun ScanScreen(
     scanViewModel: ScanViewModel = viewModel()
 ) {
-    val products by scanViewModel.products.collectAsState()
+    val product by scanViewModel.product.collectAsState()
     val scanState by scanViewModel.scanStateFlow.collectAsState()
     var scannedCode by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
+    var productFetched by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -52,7 +56,18 @@ fun ScanScreen(
     scanViewModel.isSimulated(simulated)
     Log.i("simulated",simulated.toString())
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        topBar = {
+        TopAppBar(
+            title = {
+                Row (modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp) ,verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Scanner")
+                    GoBackButton()
+                }
+
+            },
+        )
+    }) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
 
             when(val p = scanState) {
@@ -74,14 +89,15 @@ fun ScanScreen(
                                 .build()
                                 .also {
                                     it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { code ->
-                                        if (!isProcessing) {
+                                        if (!isProcessing && !productFetched) {
                                             isProcessing = true
                                             scannedCode = code
-                                            
-                                            // on récupère le produit et on navigue si réussi
+
+                                            // on récupère le produit
                                             scanViewModel.fetchProduct(code) {
                                                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                                                context.startActivity(Intent(context, HistoryActivity::class.java))
+                                                productFetched = true
+                                                isProcessing = false
                                             }
                                         }
                                     })
@@ -117,29 +133,54 @@ fun ScanScreen(
                 }
             }
 
+            if (product != null && productFetched){
+                Row(modifier = Modifier.padding(8.dp)) {
+                    AsyncImage(
+                        model = product?.imageUrl,
+                        contentDescription = product?.name,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        Text(product?.name ?: "Nom inconnu", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = scannedCode ?: "Aucun code détecté",
-                modifier = Modifier.padding(16.dp)
-            )
+            if (scannedCode == null){
+                Text(
+                    text = "Aucun code détecté",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
 
-            LazyColumn {
-                items(products) { product ->
-                    Row(modifier = Modifier.padding(8.dp)) {
-                        AsyncImage(
-                            model = product.imageUrl,
-                            contentDescription = product.name,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(product.name, fontWeight = FontWeight.Bold)
-                            Text(product.brand.toString())
-                            Text(product.quantity)
-                        }
-                    }
+            if (productFetched && product != null) {
+                // bouton de reinitalisation
+                Button(
+                    onClick = {
+                        scannedCode = null
+                        productFetched = false
+                        isProcessing = false
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text("Reset")
                 }
+                // bouton de validation
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(context, HistoryActivity::class.java))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text("Validate")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
