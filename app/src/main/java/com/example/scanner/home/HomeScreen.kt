@@ -76,7 +76,7 @@ private fun HistoryButton(onButtonClick: () -> Unit) {
     Button(
         onClick = onButtonClick
     ) {
-        Text("History")
+        Text("Historique")
     }
 }
 
