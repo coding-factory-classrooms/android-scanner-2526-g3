@@ -10,6 +10,9 @@ import android.util.Log
 import android.widget.Toast
 import com.example.scanner.ScannedProduct
 import io.paperdb.Paper
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 sealed class HistoryUIState{
     data object Loading : HistoryUIState()
@@ -28,6 +31,11 @@ class HistoryViewModel: ViewModel(){
     
     init {
         loadProducts()
+    }
+
+    fun formatDate(date: Date): String {
+        val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE)
+        return formatter.format(date)
     }
 
     private fun loadProducts() {

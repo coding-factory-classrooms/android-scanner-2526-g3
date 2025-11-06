@@ -144,11 +144,11 @@ private fun ProductsList(state: HistoryUIState.Success) {
 }
 
 @Composable
-fun ProductCard(product: ScannedProduct, context: Context) {
+fun ProductCard(product: ScannedProduct, context: Context, vm: HistoryViewModel=viewModel()) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(164.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -178,7 +178,7 @@ fun ProductCard(product: ScannedProduct, context: Context) {
                 Text(product.productNameFr, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 val brands = product.brandsTags.joinToString(", ")
                 Text("De "+brands, fontStyle = FontStyle.Italic)
-                Text(product.lastScanDate.toString())
+                Text(vm.formatDate(product.lastScanDate))
 
                 Row {
                     DetailsButton(onButtonClick = {
