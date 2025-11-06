@@ -36,7 +36,10 @@ import com.example.scanner.ui.theme.ScannerTheme
 fun HistoryScreen(vm: HistoryViewModel = viewModel()) {
     val uiState by vm.uiStateFlow.collectAsState()
 
-    vm.loadScannedProducts()
+    // Effectuer une seule fois le chargement des produits
+    LaunchedEffect (Unit) {
+        vm.loadScannedProducts()
+    }
 
     Scaffold(topBar = {
         TopAppBar(
