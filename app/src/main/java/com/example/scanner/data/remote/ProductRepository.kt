@@ -13,10 +13,13 @@ class ProductRepository(private val api: ProductApi) {
             if (dto.status == 1 && dto.product != null) {
                 Product(
                     name = dto.product.product_name ?: "Inconnu",
-                    brand = dto.product.brands ?: "N/A",
+                    brand = dto.product.brands_tags ?: emptyList(),
                     quantity = dto.product.quantity ?: "-",
-                    imageUrl = dto.product.image_url ?: "",
-                    lastScanDate = Calendar.getInstance().time
+                    imageUrl = dto.product.image_front_url ?: "",
+                    lastScanDate = Calendar.getInstance().time,
+                    allergensTagsFr = dto.product.allergens_tags_fr ?: emptyList(),
+                    categoriesTagsFr = dto.product.categories_tags_fr ?: emptyList(),
+                    ingredientsTagsFr = dto.product.ingredients_tags_fr ?: emptyList(),
                 )
             } else {
                 Log.e("ProductRepository", "Produit non trouvé pour le code: $barcode")
@@ -27,6 +30,5 @@ class ProductRepository(private val api: ProductApi) {
             null
         }
     }
-
 }
 

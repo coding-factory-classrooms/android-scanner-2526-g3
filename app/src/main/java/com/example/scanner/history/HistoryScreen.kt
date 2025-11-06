@@ -1,5 +1,7 @@
 package com.example.scanner.history
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -24,11 +26,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.scanner.ScannedProduct
+import com.example.scanner.productDetails.ProductDetailsActivity
+import com.example.scanner.scan.ScanActivity
 import com.example.scanner.ui.theme.ScannerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +65,7 @@ fun HistoryScreen(vm: HistoryViewModel = viewModel()) {
 
 @Composable
 fun HistoryBody(state: HistoryUIState) {
+    val context = LocalContext.current
     when (state) {
         is HistoryUIState.Failure -> Text(state.message)
         HistoryUIState.Loading -> CircularProgressIndicator()
@@ -67,25 +73,26 @@ fun HistoryBody(state: HistoryUIState) {
             modifier = Modifier.fillMaxSize()
         ) {
             items(state.scannedProducts) { product ->
-                ProductCard(product)
+                ProductCard(product, context)
             }
         }
     }
 }
 
 @Composable
-fun ProductCard(product: ScannedProduct) {
+fun ProductCard(product: ScannedProduct, context: Context) {
     Card(
         modifier = Modifier
-        .fillMaxWidth()
-        .height(140.dp),
+            .fillMaxWidth()
+            .height(140.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )) {
-        Row(Modifier
-            .fillMaxWidth(),
+        )
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -98,11 +105,18 @@ fun ProductCard(product: ScannedProduct) {
             )
 
             Column {
-                Log.i("product",product.toString())
+                Log.i("product", product.toString())
                 Text(product.productNameFr)
-                Text(product.brandsTags[0])
+                Text(product.brandsTags.toString())
                 Text(product.lastScanDate.toString())
+                DetailsButton(onButtonClick = {
+                    val intent = Intent(context, ProductDetailsActivity::class.java)
+                    intent.putExtra("product", product)
+                    context.startActivity(intent)
+                })
             }
+
+
         }
     }
 }
@@ -113,5 +127,14 @@ fun HistoryScreenPreview() {
     ScannerTheme {
         // ViewModel non nécessaire pour preview → état vide
         HistoryScreen()
+    }
+}
+
+@Composable
+fun DetailsButton(onButtonClick: () -> Unit) {
+    Button(
+        onClick = onButtonClick
+    ) {
+        Text("Details")
     }
 }

@@ -7,9 +7,12 @@ data class ProductDto(
 
 data class ProductData(
     val product_name: String?,
-    val brands: String?,
+    val brands_tags: List<String>?,
     val quantity: String?,
-    val image_url: String?
+    val image_front_url: String?,
+    val allergens_tags_fr: List<String>?,
+    val categories_tags_fr: List<String>?,
+    val ingredients_tags_fr: List<String>?,
 )
 
 
