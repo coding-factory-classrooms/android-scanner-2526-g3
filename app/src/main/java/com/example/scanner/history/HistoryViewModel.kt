@@ -39,7 +39,7 @@ class HistoryViewModel: ViewModel(){
                 Product(
                     name = scannedProduct.productNameFr,
                     brand = scannedProduct.brandsTags,
-                    quantity = "",
+                    quantity = scannedProduct.quantity,
                     imageUrl = scannedProduct.imageFrontURL,
                     lastScanDate = scannedProduct.lastScanDate,
                     allergensTagsFr = scannedProduct.allergensTagsFr,

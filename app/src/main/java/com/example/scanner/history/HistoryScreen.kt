@@ -91,6 +91,9 @@ private fun ProductsList(state: HistoryUIState.Success) {
     // on crée la variable pour le champ de recherche
     var searchQuery by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+
+
     // on filtre les produits par le nom du produit, en ne regardant pas les majuscules
     var filteredProducts = state.scannedProducts.filter { productMap ->
         (productMap.productNameFr as? String)
@@ -112,7 +115,7 @@ private fun ProductsList(state: HistoryUIState.Success) {
         modifier = Modifier.fillMaxSize()
     ) {
         items(filteredProducts) { product ->
-            ProductCard(product)
+            ProductCard(product, context)
         }
     }
 }
