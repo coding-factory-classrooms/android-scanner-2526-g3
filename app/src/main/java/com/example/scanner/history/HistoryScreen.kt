@@ -3,7 +3,9 @@ package com.example.scanner.history
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -30,13 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.scanner.ScannedProduct
@@ -125,7 +131,7 @@ fun ProductCard(product: ScannedProduct, context: Context) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .height(164.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -133,34 +139,40 @@ fun ProductCard(product: ScannedProduct, context: Context) {
         )
     ) {
         Row(
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(product.imageFrontURL),
-                contentDescription = product.productNameFr,
+            Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .padding(8.dp),
-                contentScale = ContentScale.Crop
-            )
-
-            Column {
-                Log.i("product", product.toString())
-                Text(product.productNameFr)
-                Text(product.brandsTags.toString())
-                Text(product.lastScanDate.toString())
-                DetailsButton(onButtonClick = {
-                    val intent = Intent(context, ProductDetailsActivity::class.java)
-                    intent.putExtra("product", product)
-                    context.startActivity(intent)
-                })
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .padding(8.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(product.imageFrontURL),
+                    contentDescription = product.productNameFr,
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.FillHeight
+                )
             }
 
-            Column(verticalArrangement = Arrangement.Top) {
-                FavoriteButton(product)
-                ShareButton(product)
-                DeleteButton(product)
+            Column (modifier = Modifier.padding(start = 16.dp)) {
+                Log.i("product", product.toString())
+                Text(product.productNameFr, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                val brands = product.brandsTags.joinToString(", ")
+                Text("De "+brands, fontStyle = FontStyle.Italic)
+                Text(product.lastScanDate.toString())
+
+                Row {
+                    DetailsButton(onButtonClick = {
+                        val intent = Intent(context, ProductDetailsActivity::class.java)
+                        intent.putExtra("product", product)
+                        context.startActivity(intent)
+                    })
+                    FavoriteButton(product)
+                    ShareButton(product)
+                    DeleteButton(product)
+                }
             }
 
         }
