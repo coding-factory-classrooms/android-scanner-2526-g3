@@ -29,7 +29,7 @@ class ScanViewModel(
     val scanStateFlow = MutableStateFlow<ScanState>(ScanState.Initial)
 
     fun isSimulated(isSimulated: Boolean) {
-        scanStateFlow.value = when(isSimulated) {
+        scanStateFlow.value = when (isSimulated) {
             true -> ScanState.Simulated
             false -> ScanState.Normal
         }
@@ -38,17 +38,17 @@ class ScanViewModel(
     fun fetchProduct(barcode: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             val product = repository.getProductByBarcode(barcode)
-            
+
             if (product != null) {
                 _products.value = _products.value + product
-                
+
                 // mettre le produit dans paper
                 saveProductToHistory(product, barcode)
                 onSuccess()
             }
         }
     }
-    
+
     private fun saveProductToHistory(product: Product, barcode: String) {
         val scannedProduct = ScannedProduct(
             brandsTags = product.brand,
@@ -61,12 +61,24 @@ class ScanViewModel(
             categoriesTagsFr = product.categoriesTagsFr,
             ingredientsTagsFr = product.ingredientsTagsFr
         )
-        
+
         val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+
+        val existingProduct = existingList.find { product ->
+            product.code == barcode
+        }
+
+        // copie de la liste existante en une liste modifiable
         val updatedList = existingList.toMutableList()
+
+        if (existingProduct != null) {
+            updatedList.remove(existingProduct)
+        }
+
         updatedList.add(scannedProduct)
+
         Paper.book().write("products", updatedList)
-        
+
         Log.i("ScanViewModel", scannedProduct.toString())
     }
 }
