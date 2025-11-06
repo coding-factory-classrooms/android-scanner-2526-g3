@@ -2,6 +2,7 @@ package com.example.scanner.scan
 
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -79,6 +80,7 @@ fun ScanScreen(
                                             
                                             // on récupère le produit et on navigue si réussi
                                             scanViewModel.fetchProduct(code) {
+                                                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
                                                 context.startActivity(Intent(context, HistoryActivity::class.java))
                                             }
                                         }
