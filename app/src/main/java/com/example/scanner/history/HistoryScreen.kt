@@ -1,5 +1,6 @@
 package com.example.scanner.history
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -68,16 +69,28 @@ fun HistoryScreen(vm: HistoryViewModel = viewModel()) {
                 titleContentColor = MaterialTheme.colorScheme.primary,
             ),
             title = {
-                Text("Scanned Products")
-            }
-        )
-    }) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()) {
-            HistoryBody(uiState)
-        }
+                Row (modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp) ,verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Scanned Products")
+                    GoBackButton()
+                }
 
+            },
+        )
+
+    }) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+
+            HistoryBody(
+                state = uiState,
+            )
+        }
     }
 }
 
@@ -117,13 +130,17 @@ private fun ProductsList(state: HistoryUIState.Success) {
         value = searchQuery,
         onValueChange = {searchQuery = it}
     )
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.wrapContentHeight()
     ) {
         items(filteredProducts) { product ->
             ProductCard(product, context)
         }
+
     }
+
+
 }
 
 @Composable
@@ -131,7 +148,7 @@ fun ProductCard(product: ScannedProduct, context: Context) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(164.dp),
+            .height(200.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -173,11 +190,17 @@ fun ProductCard(product: ScannedProduct, context: Context) {
                     ShareButton(product)
                     DeleteButton(product)
                 }
+
+
             }
+
+
+
 
         }
     }
 }
+
 
 @Composable
 private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
@@ -197,6 +220,21 @@ private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = view
         )
     }
 }
+@Composable
+private fun GoBackButton() {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    Button(
+        onClick = {
+            activity?.finish()
+        }
+    ) {
+        Text("Retour")
+    }
+}
+
+
 
 @Composable
 private fun ShareButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
