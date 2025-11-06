@@ -1,6 +1,8 @@
 package com.example.scanner.scan
 
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scanner.ScannedProduct
@@ -35,7 +37,7 @@ class ScanViewModel(
         }
     }
 
-    fun fetchProduct(barcode: String, onSuccess: () -> Unit) {
+    fun fetchProduct(barcode: String, onSuccess: (String) -> Unit) {
         viewModelScope.launch {
             val product = repository.getProductByBarcode(barcode)
 
@@ -43,8 +45,8 @@ class ScanViewModel(
                 _products.value = _products.value + product
 
                 // mettre le produit dans paper
-                saveProductToHistory(product, barcode)
-                onSuccess()
+                val message = saveProductToHistory(product, barcode)
+                onSuccess(message)
             }
         }
     }
@@ -59,7 +61,7 @@ class ScanViewModel(
         }
     }
 
-    private fun saveProductToHistory(product: Product, barcode: String) {
+    private fun saveProductToHistory(product: Product, barcode: String): String {
         val scannedProduct = ScannedProduct(
             brandsTags = product.brand,
             code = barcode,
@@ -90,6 +92,12 @@ class ScanViewModel(
         Paper.book().write("products", updatedList)
 
         Log.i("ScanViewModel", scannedProduct.toString())
+
+        return if (existingProduct != null) {
+            "Produit déjà ajouté"
+        } else {
+            "Produit ajouté"
+        }
     }
 }
 
