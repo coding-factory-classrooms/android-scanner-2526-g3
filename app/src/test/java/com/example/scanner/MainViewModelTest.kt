@@ -25,9 +25,12 @@ class FakeApi : ProductApi {
             status = 1,
             product = ProductData(
                 product_name = "Coca Cola",
-                brands = "Coca-Cola",
+                brands_tags = listOf("CocaCola"),
                 quantity = "330ml",
-                image_url = "https://m.media-amazon.com/images/I/61lMtYzJENL.jpg"
+                image_front_url = "https://m.media-amazon.com/images/I/61lMtYzJENL.jpg",
+                allergens_tags_fr = listOf("lait", "Noix"),
+                categories_tags_fr = listOf("Boisson sucré"),
+                ingredients_tags_fr = listOf("gaz","sucre"),
             )
         )
     }
@@ -40,6 +43,7 @@ class MainViewModelTest {
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
+
 
     @Before
     fun setup() {
@@ -60,14 +64,17 @@ class MainViewModelTest {
 
         // Act
         var callbackCalled = false
-        viewModel.fetchProduct("1234") { 
+        viewModel.fetchProductTest("1234") {
             callbackCalled = true
         }
 
         // Assert
         assertEquals(1, viewModel.products.value.size)
         assertEquals("Coca Cola", viewModel.products.value[0].name)
-        assertEquals("Coca-Cola", viewModel.products.value[0].brand)
+        assertEquals(listOf("CocaCola"), viewModel.products.value[0].brand)
+        assertEquals(listOf("lait", "Noix"), viewModel.products.value[0].allergensTagsFr)
+        assertEquals(listOf("Boisson sucré"), viewModel.products.value[0].categoriesTagsFr)
+        assertEquals(listOf("gaz","sucre"), viewModel.products.value[0].ingredientsTagsFr)
         assertTrue("Callback should be called on success", callbackCalled)
     }
 
