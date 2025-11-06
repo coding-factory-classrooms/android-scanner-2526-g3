@@ -1,10 +1,12 @@
 package com.example.scanner.history
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.example.scanner.domain.model.Product
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.util.Log
+import android.widget.Toast
 import com.example.scanner.ScannedProduct
 import io.paperdb.Paper
 
@@ -51,11 +53,46 @@ class HistoryViewModel: ViewModel(){
         // Recup les produits scannés dans le local storage
         val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
         Log.i("HistoryViewModel", "Produits chargés: ${existingList.size}")
+        Log.i("HistoryViewModel", "Produits: ${existingList}")
         
         if (existingList.isNotEmpty()) {
             uiStateFlow.value = HistoryUIState.Success(existingList)
         } else {
             uiStateFlow.value = HistoryUIState.Failure("Aucun produit scanné")
         }
+    }
+
+
+    fun changeFavoriteProduct(product: ScannedProduct, context: Context) {
+        // 1. Déterminer la nouvelle valeur de 'isFavorite'
+        val favoriteProductValue = !product.isFavorite
+
+        // Affichage Toast (cette partie est correcte)
+        when (favoriteProductValue) {
+            true -> {
+                Toast.makeText(context, product.productNameFr + " mis en favori", Toast.LENGTH_SHORT).show()
+            }
+            false -> {
+                Toast.makeText(context, product.productNameFr + " retiré des favoris", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // modification du produit
+        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+        val updatedList = existingList.toMutableList()
+
+        // on récupère le produit via sa date de scan (car on a pas d'id)
+        val indexToUpdate = updatedList.indexOfFirst {
+            it.lastScanDate == product.lastScanDate
+        }
+
+        if (indexToUpdate != -1) {
+            val updatedProduct = updatedList[indexToUpdate].copy(isFavorite = favoriteProductValue)
+            updatedList[indexToUpdate] = updatedProduct
+        } else {
+            Toast.makeText(context, "Produit non trouvé :(", Toast.LENGTH_SHORT).show()
+        }
+
+        Paper.book().write("products", updatedList)
     }
 }

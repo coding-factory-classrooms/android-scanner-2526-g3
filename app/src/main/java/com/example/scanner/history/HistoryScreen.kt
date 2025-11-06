@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,8 +26,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.scanner.ScannedProduct
 import com.example.scanner.ui.theme.ScannerTheme
+import com.example.scanner.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,11 +83,14 @@ private fun ProductsList(state: HistoryUIState.Success) {
     var searchQuery by remember { mutableStateOf("") }
 
     // on filtre les produits par le nom du produit, en ne regardant pas les majuscules
-    val filteredProducts = state.scannedProducts.filter { productMap ->
+    var filteredProducts = state.scannedProducts.filter { productMap ->
         (productMap.productNameFr as? String)
             ?.contains(searchQuery, ignoreCase = true)
             ?: false
     }
+
+    // les favoris en premiers
+    filteredProducts = filteredProducts.sortedBy { !it.isFavorite }
 
     OutlinedTextField(
         modifier = Modifier.fillMaxWidth(),
@@ -130,7 +138,27 @@ fun ProductCard(product: ScannedProduct) {
                 Text(product.brandsTags[0])
                 Text(product.lastScanDate.toString())
             }
+
+            FavoriteButton(product)
         }
+    }
+}
+
+@Composable
+private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
+    var isToggled by remember { mutableStateOf(product.isFavorite) }
+    val context = LocalContext.current
+
+    IconButton(
+        onClick = {
+            isToggled = !isToggled
+            vm.changeFavoriteProduct(product, context)
+        }
+    ) {
+        Icon(
+            painter = if (isToggled) painterResource(R.drawable.favorite_filled) else painterResource(R.drawable.favorite),
+            contentDescription = "Bouton favori"
+        )
     }
 }
 
@@ -138,7 +166,6 @@ fun ProductCard(product: ScannedProduct) {
 @Composable
 fun HistoryScreenPreview() {
     ScannerTheme {
-        // ViewModel non nécessaire pour preview → état vide
         HistoryScreen()
     }
 }
