@@ -10,7 +10,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.camera.core.ExperimentalGetImage
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scanner.data.remote.ProductApi
+import com.example.scanner.data.remote.ProductRepository
 import com.example.scanner.ui.theme.ScannerTheme
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.Executors
 
 class ScanActivity : ComponentActivity() {
@@ -22,18 +29,39 @@ class ScanActivity : ComponentActivity() {
     @ExperimentalGetImage
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // récupère le booléen simulated, qui sera récupéré plus tard sur le VM
+        
         val simulated = intent.getBooleanExtra("simulated", false)
 
         enableEdgeToEdge()
-        setContent {
-            ScannerTheme {
-                ScanScreen()
+
+        // crée une requête rétrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://world.openfoodfacts.org/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val productApi = retrofit.create(ProductApi::class.java)
+
+        // on instancie le répository (le modèle de Produits) (d'ailleurs je viens de me rendre compte, Pourquoi on a fait ça alors qu'on a un modèle ScannedProducts ?)
+        val repository = ProductRepository(productApi)
+
+        // Factory pour créer le ViewModel avec le repository
+        // (obligatoire car ScanViewModel a besoin du repository dans son constructeur)
+        val viewModelFactory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return ScanViewModel(repository) as T
             }
         }
 
-        if (!hasAllPermissions()) {
+        setContent {
+            ScannerTheme {
+                val scanViewModel: ScanViewModel = viewModel(factory = viewModelFactory)
+                ScanScreen(scanViewModel = scanViewModel)
+            }
+        }
+
+        // on demande la permission s'il ne les a pas
+        if (!hasAllPermissions() && !simulated) {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
     }

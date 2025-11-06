@@ -2,70 +2,65 @@ package com.example.scanner.scan
 
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.scanner.ui.theme.ScannerTheme
-import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.example.scanner.history.HistoryActivity
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreview
 
-
 @ExperimentalGetImage
 @Composable
-fun ScanScreen(vm: ScanViewModel = viewModel()) {
+fun ScanScreen(
+    scanViewModel: ScanViewModel = viewModel()
+) {
+    val products by scanViewModel.products.collectAsState()
+    val scanState by scanViewModel.scanStateFlow.collectAsState()
+    var scannedCode by remember { mutableStateOf<String?>(null) }
+    var isProcessing by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
-
-
-    val scanState by vm.scanStateFlow.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
     // récupère la variable Simulated depuis l'activity
     val simulated = (context as? ComponentActivity)
         ?.intent
         ?.getBooleanExtra("simulated", false) ?: false
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
-    var scannedCode by remember { mutableStateOf<String?>(null) }
-
     // on update l'état de simulation
-    vm.isSimulated(simulated)
+    scanViewModel.isSimulated(simulated)
     Log.i("simulated",simulated.toString())
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    Scaffold { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
 
-            when(val s = scanState) {
-                // Etat initial, donc on mets un chargement
+            when(val p = scanState) {
                 ScanState.Initial -> CircularProgressIndicator()
-                // Etat "normal" donc on affiche la caméra
                 ScanState.Normal -> AndroidView(
                     factory = { ctx ->
-                        // on affiche la caméra dans une Preview View
                         val previewView = PreviewView(ctx)
-                        val executor = Executors.newSingleThreadExecutor()
+                        val cameraExecutor = Executors.newSingleThreadExecutor()
 
-                        // on gère le scan de bar-code via la caméra
                         cameraProviderFuture.addListener({
                             val cameraProvider = cameraProviderFuture.get()
 
@@ -75,39 +70,50 @@ fun ScanScreen(vm: ScanViewModel = viewModel()) {
 
                             val analyzer = ImageAnalysis.Builder()
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build().apply {
-                                    setAnalyzer(executor) { imageProxy ->
-                                        processImage(imageProxy) { code ->
+                                .build()
+                                .also {
+                                    it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { code ->
+                                        if (!isProcessing) {
+                                            isProcessing = true
                                             scannedCode = code
-                                            Log.d("ScanScreen", "Code: $code")
+                                            
+                                            // on récupère le produit et on navigue si réussi
+                                            scanViewModel.fetchProduct(code) {
+                                                context.startActivity(Intent(context, HistoryActivity::class.java))
+                                            }
                                         }
-                                    }
+                                    })
                                 }
 
-                            // Fin du scan, donc on retire la gestion de la caméra
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                analyzer
-                            )
+                            try {
+                                cameraProvider.unbindAll()
+                                cameraProvider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_BACK_CAMERA,
+                                    preview,
+                                    analyzer
+                                )
+                            } catch (e: Exception) {
+                                Log.e("CameraX", "Use case binding failed", e)
+                            }
+
                         }, ContextCompat.getMainExecutor(ctx))
 
                         previewView
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
+                    modifier = Modifier.fillMaxWidth().weight(1f)
                 )
-                // Etat "simulé" donc on mets en dur le code "scanné en mode simulation"
                 ScanState.Simulated -> {
-                    scannedCode = "3274080005003"
+                    val code = "3274080005003"
+                    // on récupère le produit et on navigue si réussi
+                    scanViewModel.fetchProduct(code) {
+                        context.startActivity(Intent(context, HistoryActivity::class.java))
+                        isProcessing = false
+                    }
                     Log.d("ScanScreen", "Code: $scannedCode")
                     Text("Simulation de scan")
                 }
             }
-
 
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -116,28 +122,59 @@ fun ScanScreen(vm: ScanViewModel = viewModel()) {
                 text = scannedCode ?: "Aucun code détecté",
                 modifier = Modifier.padding(16.dp)
             )
+
+            LazyColumn {
+                items(products) { product ->
+                    Row(modifier = Modifier.padding(8.dp)) {
+                        AsyncImage(
+                            model = product.imageUrl,
+                            contentDescription = product.name,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(product.name, fontWeight = FontWeight.Bold)
+                            Text(product.brand)
+                            Text(product.quantity)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
+@Composable
+fun Builder() {
+    TODO("Not yet implemented")
+}
 
-@ExperimentalGetImage
-private fun processImage(imageProxy: ImageProxy, onResult: (String) -> Unit) {
-    val mediaImage = imageProxy.image ?: return imageProxy.close()
-    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+private class BarcodeAnalyzer(
+    private val onBarcodeDetected: (String) -> Unit
+) : ImageAnalysis.Analyzer {
 
-    // On utilise un module BarcodeScanning, qui regarde via l'image de la caméra les numéros du barcode
-    BarcodeScanning.getClient()
-        .process(image)
-        .addOnSuccessListener { barcodes ->
-            barcodes.firstOrNull()?.rawValue?.let(onResult)
-        }
-        .addOnFailureListener { e ->
-            Log.e("BarcodeScan", "Erreur : ${e.message}")
-        }
-        .addOnCompleteListener {
+    private val scanner = BarcodeScanning.getClient()
+
+    @ExperimentalGetImage
+    override fun analyze(imageProxy: ImageProxy) {
+        val mediaImage = imageProxy.image
+        if (mediaImage != null) {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            scanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    for (barcode in barcodes) {
+                        barcode.rawValue?.let { onBarcodeDetected(it) }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("BarcodeAnalyzer", "Erreur de scan", e)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
+        } else {
             imageProxy.close()
         }
+    }
 }
 
 @ExperimentalGetImage
