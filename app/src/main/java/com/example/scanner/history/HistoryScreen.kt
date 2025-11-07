@@ -204,6 +204,8 @@ fun ProductCard(product: ScannedProduct, context: Context, vm: HistoryViewModel=
 
 @Composable
 private fun FavoriteButton(product : ScannedProduct, vm: HistoryViewModel = viewModel()) {
+    // initialise isToggled par le booléen du produit, et permet de garder la valeur après rechargement de l'écran
+    // si la valeur est modifiée, alors le bouton se rebuild
     var isToggled by remember { mutableStateOf(product.isFavorite) }
     val context = LocalContext.current
 
