@@ -128,10 +128,17 @@ fun ScanScreen(
                 ScanState.Simulated -> {
                     val code = "3274080005003"
                     // on récupère le produit et on navigue si réussi
+
+                    isProcessing = true
+                    scannedCode = code
+
+                    // on récupère le produit
                     scanViewModel.fetchProduct(code) {
-                        context.startActivity(Intent(context, HistoryActivity::class.java))
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        productFetched = true
                         isProcessing = false
                     }
+
                     Log.d("ScanScreen", "Code: $scannedCode")
                     Text("Simulation de scan")
                 }
