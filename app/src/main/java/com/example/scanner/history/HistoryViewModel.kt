@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.util.Log
 import android.widget.Toast
+import com.example.scanner.LocalStorage
+import com.example.scanner.LocalStoragePaper
 import com.example.scanner.ScannedProduct
 import io.paperdb.Paper
 import java.text.SimpleDateFormat
@@ -22,7 +24,9 @@ sealed class HistoryUIState{
     data class Failure(val message: String) : HistoryUIState()
 }
 
-class HistoryViewModel: ViewModel(){
+private val ls = LocalStoragePaper()
+
+class HistoryViewModel : ViewModel(), LocalStorage by ls {
   
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products: StateFlow<List<Product>> = _products
@@ -40,7 +44,8 @@ class HistoryViewModel: ViewModel(){
 
     private fun loadProducts() {
         // Charge les produits depuis Paper DB au démarrage
-        val savedProducts = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+
+        val savedProducts = ls.getProducts()
         if (savedProducts.isNotEmpty()) {
             // Convertir ScannedProduct en Product
             val productList = savedProducts.map { scannedProduct ->
@@ -63,12 +68,11 @@ class HistoryViewModel: ViewModel(){
         uiStateFlow.value = HistoryUIState.Loading
 
         // Recup les produits scannés dans le local storage
-        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
-        Log.i("HistoryViewModel", "Produits chargés: ${existingList.size}")
-        Log.i("HistoryViewModel", "Produits: ${existingList}")
+        val productList = ls.getProducts()
+        Log.i("interface",productList.toString())
         
-        if (existingList.isNotEmpty()) {
-            uiStateFlow.value = HistoryUIState.Success(existingList)
+        if (productList.isNotEmpty()) {
+            uiStateFlow.value = HistoryUIState.Success(productList)
         } else {
             uiStateFlow.value = HistoryUIState.Failure("Aucun produit scanné")
         }
@@ -88,7 +92,7 @@ class HistoryViewModel: ViewModel(){
         }
 
         // modification du produit
-        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+        val existingList = ls.getProducts()
         val updatedList = existingList.toMutableList()
 
         // on récupère le produit via sa date de scan (car on a pas d'id)
@@ -97,13 +101,17 @@ class HistoryViewModel: ViewModel(){
         }
 
         if (indexToUpdate != -1) {
+            Log.i("interface before",updatedList[indexToUpdate].toString())
             val updatedProduct = updatedList[indexToUpdate].copy(isFavorite = favoriteProductValue)
-            updatedList[indexToUpdate] = updatedProduct
+            Log.i("interface after",updatedProduct.toString())
+            val result = ls.updateProduct(indexToUpdate, updatedProduct)
+
+            if (!result) {
+                Toast.makeText(context, "Problème lors de la modification du produit", Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(context, "Produit non trouvé :(", Toast.LENGTH_SHORT).show()
         }
-
-        Paper.book().write("products", updatedList)
     }
 
     fun shareProduct(product: ScannedProduct, context: Context) {
@@ -125,23 +133,13 @@ class HistoryViewModel: ViewModel(){
 
     fun deleteProduct(product: ScannedProduct, context: Context) {
 
-        // on récupère la liste du produit
-        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
-        val productList = existingList.toMutableList()
+        val result = ls.deleteProduct(product)
 
-        // on récupère le produit via sa date de scan (car on a pas d'id)
-        val indexToUpdate = productList.indexOfFirst {
-            it.lastScanDate == product.lastScanDate
-        }
-
-        if (indexToUpdate != -1) {
-            productList.removeAt(indexToUpdate)
+        if (result) {
             Toast.makeText(context, "Produit supprimé de la liste", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "Produit non trouvé :(", Toast.LENGTH_SHORT).show()
         }
-
-        Paper.book().write("products", productList)
 
     }
 }

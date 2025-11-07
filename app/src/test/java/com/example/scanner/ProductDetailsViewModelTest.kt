@@ -57,17 +57,8 @@ class ProductDetailsViewModelTest {
         val viewModel = ProductDetailsViewModel()
         viewModel.loadDetailedProducts(produit)
 
-        // verifie que UiState est success
-        assertTrue(viewModel.uiStateFlow.value is ProductDetailsUIState.Success)
-
         // verifie produit
-        assertEquals(listOf("suntat"), viewModel.product.value?.brandsTags)
-        assertEquals("8690804360732", viewModel.product.value?.code)
-        assertEquals("https://images.openfoodfacts.net/images/products/869/080/436/0732/front_fr.22.400.jpg", viewModel.product.value?.imageFrontURL)
-        assertEquals("Latte cappuccino", viewModel.product.value?.productNameFr)
-        assertEquals("250 ml", viewModel.product.value?.quantity)
-        assertEquals(emptyList<String>(), viewModel.product.value?.allergensTagsFr)
-        assertEquals(listOf("Boissons", "Produits laitiers", "Boissons lactées", "Boissons au café", "Boissons lactées au café"), viewModel.product.value?.categoriesTagsFr)
+        assertEquals(viewModel.uiStateFlow.value, ProductDetailsUIState.Success(produit))
     }
 
     @Test
@@ -78,10 +69,7 @@ class ProductDetailsViewModelTest {
         viewModel.loadDetailedProducts(produit)
 
         // verifie que UiState est failure
-        assertTrue(viewModel.uiStateFlow.value is ProductDetailsUIState.Failure)
+        assertEquals(viewModel.uiStateFlow.value, ProductDetailsUIState.Failure("erreur dans le chargement des details du produit"))
 
-        // verifie message d'erreur
-        val failureState = viewModel.uiStateFlow.value as ProductDetailsUIState.Failure
-        assertEquals("erreur dans le chargement des details du produit", failureState.message)
     }
 }

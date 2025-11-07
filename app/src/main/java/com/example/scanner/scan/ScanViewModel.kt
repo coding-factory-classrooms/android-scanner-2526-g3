@@ -5,6 +5,8 @@ import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scanner.LocalStorage
+import com.example.scanner.LocalStoragePaper
 import com.example.scanner.ScannedProduct
 import com.example.scanner.data.remote.ProductRepository
 import com.example.scanner.domain.model.Product
@@ -21,9 +23,10 @@ sealed class ScanState {
     data object Simulated : ScanState()
 }
 
+private val ls = LocalStoragePaper()
 class ScanViewModel(
     private val repository: ProductRepository
-) : ViewModel() {
+) : ViewModel(), LocalStorage by ls {
 
     private val _product = MutableStateFlow<Product?>(null)
     val product: StateFlow<Product?> = _product.asStateFlow()
@@ -74,22 +77,28 @@ class ScanViewModel(
             ingredientsTagsFr = product.ingredientsTagsFr
         )
 
-        val existingList = Paper.book().read<List<ScannedProduct>>("products", emptyList()) ?: emptyList()
+
+        val existingList = ls.getProducts()
+
 
         val existingProduct = existingList.find { product ->
+            product.code == barcode
+        }
+
+        val index = existingList.indexOfFirst { product ->
             product.code == barcode
         }
 
         // copie de la liste existante en une liste modifiable
         val updatedList = existingList.toMutableList()
 
+
         if (existingProduct != null) {
+            ls.updateProduct(index, existingProduct)
             updatedList.remove(existingProduct)
+        } else {
+            ls.addProduct(scannedProduct)
         }
-
-        updatedList.add(scannedProduct)
-
-        Paper.book().write("products", updatedList)
 
         Log.i("ScanViewModel", scannedProduct.toString())
 
