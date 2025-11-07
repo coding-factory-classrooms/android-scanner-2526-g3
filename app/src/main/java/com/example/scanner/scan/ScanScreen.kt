@@ -77,6 +77,7 @@ fun ScanScreen(
                         val previewView = PreviewView(ctx)
                         val cameraExecutor = Executors.newSingleThreadExecutor()
 
+                        // la gestion de la caméra
                         cameraProviderFuture.addListener({
                             val cameraProvider = cameraProviderFuture.get()
 
@@ -84,10 +85,12 @@ fun ScanScreen(
                                 setSurfaceProvider(previewView.surfaceProvider)
                             }
 
+                            // on détecte le barcode via l'image de la caméra
                             val analyzer = ImageAnalysis.Builder()
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                 .build()
                                 .also {
+                                    // on détecte le code du barcode
                                     it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { code ->
                                         if (!isProcessing && !productFetched) {
                                             isProcessing = true
@@ -117,6 +120,7 @@ fun ScanScreen(
 
                         }, ContextCompat.getMainExecutor(ctx))
 
+                        // on affiche la caméra via cette variable
                         previewView
                     },
                     modifier = Modifier.fillMaxWidth().weight(1f)
