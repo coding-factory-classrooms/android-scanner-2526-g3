@@ -69,12 +69,11 @@ class MainViewModelTest {
         }
 
         // Assert
-        assertEquals(1, viewModel.products.value.size)
-        assertEquals("Coca Cola", viewModel.products.value[0].name)
-        assertEquals(listOf("CocaCola"), viewModel.products.value[0].brand)
-        assertEquals(listOf("lait", "Noix"), viewModel.products.value[0].allergensTagsFr)
-        assertEquals(listOf("Boisson sucré"), viewModel.products.value[0].categoriesTagsFr)
-        assertEquals(listOf("gaz","sucre"), viewModel.products.value[0].ingredientsTagsFr)
+        assertEquals("Coca Cola", viewModel.product.value?.name)
+        assertEquals(listOf("CocaCola"), viewModel.product.value?.brand)
+        assertEquals(listOf("lait", "Noix"), viewModel.product.value?.allergensTagsFr)
+        assertEquals(listOf("Boisson sucré"), viewModel.product.value?.categoriesTagsFr)
+        assertEquals(listOf("gaz","sucre"), viewModel.product.value?.ingredientsTagsFr)
         assertTrue("Callback should be called on success", callbackCalled)
     }
 
